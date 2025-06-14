@@ -1,73 +1,147 @@
-# Welcome to your Lovable project
+# Quick Scribe AI Flow
 
-## Project info
+A modern web application that helps content creators generate SEO-optimized content through an AI-powered workflow. The application uses React for the frontend and a Node.js/Python backend for AI processing.
 
-**URL**: https://lovable.dev/projects/ef0e1cba-2ee0-4048-98a6-637890c11418
+## Project Structure
 
-## How can I edit this code?
+```
+quick-scribe-ai-flow/
+├── src/                    # Frontend React application
+│   ├── components/        # React components
+│   ├── pages/            # Page components
+│   └── ...
+├── backend/               # Backend server
+│   ├── server.js         # Express server
+│   ├── llm_service.py    # Python LLM service
+│   └── requirements.txt   # Python dependencies
+├── public/               # Static assets
+└── ...
+```
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+### Frontend
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- Shadcn UI Components
+- React Router DOM
+- React Query
+- React Hook Form
+- Zod for validation
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/ef0e1cba-2ee0-4048-98a6-637890c11418) and start prompting.
+### Backend
+- Node.js with Express
+- Python for LLM processing
+- CORS enabled for cross-origin requests
 
-Changes made via Lovable will be committed automatically to this repo.
+## Prerequisites
 
-**Use your preferred IDE**
+- Node.js (v18 or higher)
+- Python 3.x
+- npm or yarn
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Environment Setup
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. Create a `.env` file in the root directory:
+```env
+VITE_API_URL=http://localhost:3001
+```
 
-Follow these steps:
+2. Create a `.env` file in the backend directory:
+```env
+PORT=3001
+OPENAI_API_KEY=your_openai_api_key
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Installation
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. Install frontend dependencies:
+```bash
+npm install
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. Install backend dependencies:
+```bash
+cd backend
+npm install
+pip install -r requirements.txt
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+## Running the Application
+
+1. Start the backend server:
+```bash
+cd backend
+node server.js
+```
+
+2. Start the frontend development server:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:3001
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## API Endpoints
 
-**Use GitHub Codespaces**
+### Keyword Generation
+- `POST /api/keywords`
+  - Body: `{ "seedKeyword": "your keyword" }`
+  - Generates related keywords based on the seed keyword
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Title Generation
+- `POST /api/titles`
+  - Body: `{ "keyword": "your keyword" }`
+  - Generates SEO-optimized titles
 
-## What technologies are used for this project?
+### Topic Generation
+- `POST /api/topics`
+  - Body: `{ "title": "your title" }`
+  - Generates content topics based on the title
 
-This project is built with:
+### Content Generation
+- `POST /api/content`
+  - Body: `{ "topic": "your topic" }`
+  - Generates content based on the topic
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Development Workflow
 
-## How can I deploy this project?
+1. The application follows a step-by-step content generation process:
+   - Start with a seed keyword
+   - Generate related keywords
+   - Create SEO-optimized titles
+   - Develop content topics
+   - Generate final content
 
-Simply open [Lovable](https://lovable.dev/projects/ef0e1cba-2ee0-4048-98a6-637890c11418) and click on Share -> Publish.
+2. Each step is powered by AI processing through the Python backend service
 
-## Can I connect a custom domain to my Lovable project?
+3. The frontend provides a modern, responsive interface with:
+   - Real-time updates
+   - Progress tracking
+   - Error handling
+   - Loading states
 
-Yes, you can!
+## Building for Production
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+1. Build the frontend:
+```bash
+npm run build
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+2. The production build will be available in the `dist` directory
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License.
