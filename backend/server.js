@@ -23,11 +23,14 @@ function runPythonScript(scriptPath, args) {
 
     pythonProcess.stderr.on('data', (data) => {
       error += data.toString();
+      console.error('Python Error:', data.toString());
     });
 
     pythonProcess.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error(`Python script failed: ${error}`));
+        console.error('Python Process Exit Code:', code);
+        console.error('Python Error Output:', error);
+        reject(new Error(`Python script failed with code ${code}: ${error}`));
       } else {
         try {
           const parsedResult = JSON.parse(result);
@@ -37,7 +40,8 @@ function runPythonScript(scriptPath, args) {
             resolve(parsedResult);
           }
         } catch (e) {
-          reject(new Error('Failed to parse Python script output'));
+          console.error('Parse Error:', e);
+          reject(new Error(`Failed to parse Python script output: ${e.message}`));
         }
       }
     });

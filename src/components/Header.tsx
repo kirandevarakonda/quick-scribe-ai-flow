@@ -1,8 +1,21 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Sparkles, Home, FileText } from 'lucide-react';
+import { Sparkles, Home, FileText, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export function Header() {
+  const { logout, currentUser } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Failed to log out:', error);
+    }
+  };
+
   return (
     <header className="border-b bg-white/50 backdrop-blur-sm">
       <div className="container mx-auto px-4">
@@ -29,6 +42,19 @@ export function Header() {
                 Start Writing
               </Button>
             </Link>
+            {currentUser && (
+              <div className="flex items-center gap-4 ml-4 border-l pl-4">
+                <span className="text-sm text-gray-600">{currentUser.email}</span>
+                <Button
+                  variant="ghost"
+                  onClick={handleLogout}
+                  className="gap-2 text-gray-600 hover:text-black hover:bg-gray-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
+              </div>
+            )}
           </nav>
         </div>
       </div>

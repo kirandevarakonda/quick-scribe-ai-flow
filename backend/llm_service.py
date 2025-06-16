@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import traceback
 from openai import OpenAI
 from typing import List
 from dotenv import load_dotenv
@@ -8,24 +9,38 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+# Verify API key is present
+api_key = os.getenv('OPENAI_API_KEY')
+if not api_key:
+    print(json.dumps({"error": "OPENAI_API_KEY not found in environment variables"}))
+    sys.exit(1)
+
+try:
+    client = OpenAI(api_key=api_key)
+except Exception as e:
+    print(json.dumps({"error": f"Failed to initialize OpenAI client: {str(e)}"}))
+    sys.exit(1)
 
 def generate_keywords(seed_keyword: str) -> List[str]:
     """Generate related keywords based on a seed keyword."""
-    prompt = f"Suggest 5 related keywords for '{seed_keyword}'. Return only the keywords, one per line."
-    
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful SEO assistant."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.7,
-        max_tokens=100
-    )
-    
-    keywords = response.choices[0].message.content.strip().split('\n')
-    return [k.strip() for k in keywords if k.strip()]
+    try:
+        prompt = f"Suggest 5 related keywords for '{seed_keyword}'. Return only the keywords, one per line."
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful SEO assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=100
+        )
+        
+        keywords = response.choices[0].message.content.strip().split('\n')
+        return [k.strip() for k in keywords if k.strip()]
+    except Exception as e:
+        print(json.dumps({"error": f"Error generating keywords: {str(e)}"}))
+        sys.exit(1)
 
 def generate_titles(keyword: str) -> List[str]:
     """Generate SEO-optimized titles based on a keyword."""
@@ -123,5 +138,6 @@ if __name__ == "__main__":
             print(json.dumps({"error": f"Unknown command: {command}"}))
             sys.exit(1)
     except Exception as e:
-        print(json.dumps({"error": str(e)}))
+        error_msg = f"Error in {command}: {str(e)}\n{traceback.format_exc()}"
+        print(json.dumps({"error": error_msg}))
         sys.exit(1) 
