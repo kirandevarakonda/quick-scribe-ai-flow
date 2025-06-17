@@ -50,11 +50,11 @@
       ]
     },
     {
-      "source": "/(.*\\.(png|jpg|jpeg|gif|svg|ico))",
+      "source": "/assets/(.*)\\.(png|jpg|jpeg|gif|svg|ico)",
       "headers": [
         {
           "key": "Content-Type",
-          "value": "image/$1"
+          "value": "image/$2"
         }
       ]
     }
