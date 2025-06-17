@@ -6,8 +6,19 @@ require('dotenv').config();
 
 const app = express();
 
-// Enable CORS for all routes
-app.use(cors());
+// Configure CORS with specific options
+const corsOptions = {
+  origin: [
+    'https://seo-content-generator-narkww4p5-srirams-projects-0703f8e1.vercel.app',
+    'https://seo-content-generator-ai.vercel.app',
+    'http://localhost:3000' // For local development
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Helper function to run Python scripts

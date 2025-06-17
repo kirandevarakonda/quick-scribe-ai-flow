@@ -7,4 +7,15 @@ export const API_ENDPOINTS = {
   titles: `${API_BASE_URL}/titles`,
   topics: `${API_BASE_URL}/topics`,
   content: `${API_BASE_URL}/content`,
+};
+
+export const fetchWithConfig = (url: string, options: RequestInit = {}) => {
+  return fetch(url, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
 }; 
