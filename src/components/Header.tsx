@@ -27,7 +27,7 @@ export function Header() {
               AI Content Writer
             </span>
           </Link>
-
+          
           {/* Navigation */}
           <nav className="flex items-center gap-4">
             <Link to="/">
@@ -45,7 +45,7 @@ export function Header() {
             {currentUser && (
               <div className="flex items-center gap-4 ml-4 border-l pl-4">
                 <span className="text-sm text-gray-600">{currentUser.email}</span>
-                <Button
+                <Button 
                   variant="ghost"
                   onClick={handleLogout}
                   className="gap-2 text-gray-600 hover:text-black hover:bg-gray-50"
