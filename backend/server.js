@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 // Helper function to run Python scripts
-function runPythonScript(scriptPath, args) {
+const runPythonScript = (scriptPath, args) => {
   return new Promise((resolve, reject) => {
     const pythonProcess = spawn('python3', [scriptPath, ...args]);
     let result = '';
@@ -23,30 +23,26 @@ function runPythonScript(scriptPath, args) {
 
     pythonProcess.stderr.on('data', (data) => {
       error += data.toString();
-      console.error('Python Error:', data.toString());
     });
 
     pythonProcess.on('close', (code) => {
       if (code !== 0) {
-        console.error('Python Process Exit Code:', code);
-        console.error('Python Error Output:', error);
-        reject(new Error(`Python script failed with code ${code}: ${error}`));
+        reject(new Error(error || `Python process exited with code ${code}`));
       } else {
         try {
-          const parsedResult = JSON.parse(result);
-          if (parsedResult.error) {
-            reject(new Error(parsedResult.error));
-          } else {
-            resolve(parsedResult);
-          }
+          resolve(JSON.parse(result));
         } catch (e) {
-          console.error('Parse Error:', e);
-          reject(new Error(`Failed to parse Python script output: ${e.message}`));
+          reject(new Error('Failed to parse Python script output'));
         }
       }
     });
   });
-}
+};
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
 // API endpoints
 app.post('/api/keywords', async (req, res) => {
@@ -56,10 +52,12 @@ app.post('/api/keywords', async (req, res) => {
       return res.status(400).json({ error: 'Seed keyword is required' });
     }
 
+    console.log('Generating keywords for:', seedKeyword);
     const result = await runPythonScript(
       path.join(__dirname, 'llm_service.py'),
       ['generate_keywords', seedKeyword]
     );
+    console.log('Keywords generated:', result);
     res.json(result);
   } catch (error) {
     console.error('Error generating keywords:', error);
