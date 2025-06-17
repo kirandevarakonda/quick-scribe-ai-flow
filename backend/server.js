@@ -129,5 +129,5 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// Export the Express API
+// Export the Express API for Vercel
 module.exports = app; 
