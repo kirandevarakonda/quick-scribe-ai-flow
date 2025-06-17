@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { API_ENDPOINTS, fetchWithConfig } from '@/lib/api';
+import { API_ENDPOINTS } from '@/lib/api';
 import { Loader2, Search, Sparkles, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -27,8 +27,11 @@ export default function KeywordResearch({ data, onUpdate, onNext }: KeywordResea
     setError('');
     
     try {
-      const response = await fetchWithConfig(API_ENDPOINTS.keywords, {
+      const response = await fetch(API_ENDPOINTS.keywords, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ seedKeyword: keyword.trim() }),
       });
 
@@ -53,8 +56,11 @@ export default function KeywordResearch({ data, onUpdate, onNext }: KeywordResea
     setError('');
     
     try {
-      const response = await fetchWithConfig(API_ENDPOINTS.keywords, {
+      const response = await fetch(API_ENDPOINTS.keywords, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ seedKeyword: keyword.trim() }),
       });
 
@@ -86,8 +92,11 @@ export default function KeywordResearch({ data, onUpdate, onNext }: KeywordResea
     onUpdate({ keywords: data.keywords, selectedKeyword });
     
     try {
-      const response = await fetchWithConfig(API_ENDPOINTS.titles, {
+      const response = await fetch(API_ENDPOINTS.titles, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ keyword: selectedKeyword }),
       });
 

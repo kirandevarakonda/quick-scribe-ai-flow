@@ -6,33 +6,16 @@ require('dotenv').config();
 
 const app = express();
 
-// Configure CORS with specific options
-const corsOptions = {
-  origin: [
-    'https://seo-content-generator-narkww4p5-srirams-projects-0703f8e1.vercel.app',
-    'https://seo-content-generator-ai.vercel.app',
-    'http://localhost:3000' // For local development
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-};
-
-app.use(cors(corsOptions));
+// Enable CORS for all routes
+app.use(cors());
 app.use(express.json());
 
-// Helper function to run Python scripts with timeout
+// Helper function to run Python scripts
 const runPythonScript = (scriptPath, args) => {
   return new Promise((resolve, reject) => {
     const pythonProcess = spawn('python3', [scriptPath, ...args]);
     let result = '';
     let error = '';
-
-    // Set a timeout of 50 seconds (leaving 10 seconds buffer for Vercel's 60-second limit)
-    const timeout = setTimeout(() => {
-      pythonProcess.kill();
-      reject(new Error('Python script execution timed out'));
-    }, 50000);
 
     pythonProcess.stdout.on('data', (data) => {
       result += data.toString();
@@ -43,7 +26,6 @@ const runPythonScript = (scriptPath, args) => {
     });
 
     pythonProcess.on('close', (code) => {
-      clearTimeout(timeout);
       if (code !== 0) {
         reject(new Error(error || `Python process exited with code ${code}`));
       } else {
@@ -79,10 +61,7 @@ app.post('/api/keywords', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error generating keywords:', error);
-    res.status(500).json({ 
-      error: error.message || 'Failed to generate keywords',
-      details: error.stack
-    });
+    res.status(500).json({ error: error.message || 'Failed to generate keywords' });
   }
 });
 
