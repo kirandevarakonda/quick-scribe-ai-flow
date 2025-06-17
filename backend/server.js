@@ -21,12 +21,18 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Helper function to run Python scripts
+// Helper function to run Python scripts with timeout
 const runPythonScript = (scriptPath, args) => {
   return new Promise((resolve, reject) => {
     const pythonProcess = spawn('python3', [scriptPath, ...args]);
     let result = '';
     let error = '';
+
+    // Set a timeout of 50 seconds (leaving 10 seconds buffer for Vercel's 60-second limit)
+    const timeout = setTimeout(() => {
+      pythonProcess.kill();
+      reject(new Error('Python script execution timed out'));
+    }, 50000);
 
     pythonProcess.stdout.on('data', (data) => {
       result += data.toString();
@@ -37,6 +43,7 @@ const runPythonScript = (scriptPath, args) => {
     });
 
     pythonProcess.on('close', (code) => {
+      clearTimeout(timeout);
       if (code !== 0) {
         reject(new Error(error || `Python process exited with code ${code}`));
       } else {
@@ -72,7 +79,10 @@ app.post('/api/keywords', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error generating keywords:', error);
-    res.status(500).json({ error: error.message || 'Failed to generate keywords' });
+    res.status(500).json({ 
+      error: error.message || 'Failed to generate keywords',
+      details: error.stack
+    });
   }
 });
 
