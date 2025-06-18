@@ -6,69 +6,95 @@ import { API_ENDPOINTS } from '@/lib/api';
 
 interface TopicSelectionProps {
   data: {
+    selectedKeyword: string;
+    titles: string[];
     selectedTitle: string;
     topics: string[];
-    selectedTopic: string;
+    keywords: string[];
+    selectedTopic?: string;
   };
-  onUpdate: (data: { topics: string[]; selectedTopic: string; content?: string }) => void;
+  onUpdate: (data: any) => void;
   onNext: () => void;
-  onBack?: () => void;
+  onBack: () => void;
 }
 
 export default function TopicSelection({ data, onUpdate, onNext, onBack }: TopicSelectionProps) {
-  const [generatingContent, setGeneratingContent] = useState(false);
+  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
 
   const handleRegenerateTopics = async () => {
-    if (!data.selectedTopic) return;
-    
+    if (isRegenerating) return;
     setIsRegenerating(true);
+    setError(null);
+    
     try {
       const response = await fetch(API_ENDPOINTS.topics, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ title: data.selectedTopic }),
+        body: JSON.stringify({ 
+          title: data.selectedTitle,
+          keywords: data.keywords 
+        }),
       });
-      
-      if (!response.ok) throw new Error('Failed to generate topics');
-      
-      const { topics } = await response.json();
-      onUpdate({ topics, selectedTopic: data.selectedTopic });
-    } catch (error) {
-      console.error('Error generating topics:', error);
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to regenerate topics');
+      }
+
+      if (!responseData.topics || !Array.isArray(responseData.topics)) {
+        throw new Error('Invalid response format from server');
+      }
+
+      onUpdate({ ...data, topics: responseData.topics, selectedTopic: undefined });
+    } catch (err) {
+      console.error('Error regenerating topics:', err);
+      setError(err.message || 'Failed to regenerate topics. Please try again.');
     } finally {
       setIsRegenerating(false);
     }
   };
 
-  const handleTopicSelect = async (topic: string) => {
-    setGeneratingContent(true);
+  const handleTopicSelect = async (selectedTopic: string) => {
+    if (isGeneratingContent) return;
+    
+    setIsGeneratingContent(true);
+    setError(null);
+    onUpdate({ ...data, selectedTopic });
+    
     try {
-      // First update the selected topic
-      onUpdate({ ...data, selectedTopic: topic });
-      
-      // Then generate content for the selected topic
       const response = await fetch(API_ENDPOINTS.content, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ topic }),
+        body: JSON.stringify({ 
+          title: data.selectedTitle,
+          topics: [selectedTopic],
+          keywords: data.keywords 
+        }),
       });
-      
-      if (!response.ok) throw new Error('Failed to generate content');
-      
-      const { content } = await response.json();
-      onUpdate({ ...data, selectedTopic: topic, content });
-      
-      // Automatically proceed to the next step
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to generate content');
+      }
+
+      if (!responseData.content) {
+        throw new Error('Invalid response format from server');
+      }
+
+      onUpdate({ ...data, selectedTopic, content: responseData.content });
       onNext();
-    } catch (error) {
-      console.error('Error generating content:', error);
-    } finally {
-      setGeneratingContent(false);
+    } catch (err) {
+      console.error('Error generating content:', err);
+      setError(err.message || 'Failed to generate content. Please try again.');
+      setIsGeneratingContent(false);
     }
   };
 
@@ -81,21 +107,16 @@ export default function TopicSelection({ data, onUpdate, onNext, onBack }: Topic
             variant="outline"
             size="sm"
             onClick={handleRegenerateTopics}
-            disabled={isRegenerating || !data.selectedTopic}
+            disabled={isRegenerating}
           >
-            {isRegenerating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Regenerating...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Regenerate
-              </>
-            )}
+            {isRegenerating ? 'Regenerating...' : 'Regenerate Topics'}
           </Button>
         </div>
+        {error && (
+          <div className="p-4 text-sm text-red-700 bg-red-100 rounded-lg">
+            {error}
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-2">
           {data.topics.map((topic) => (
             <Card
@@ -104,12 +125,12 @@ export default function TopicSelection({ data, onUpdate, onNext, onBack }: Topic
                 data.selectedTopic === topic
                   ? 'border-primary bg-primary/5'
                   : 'hover:border-primary/50'
-              } ${generatingContent ? 'opacity-50 pointer-events-none' : ''}`}
+              } ${isGeneratingContent ? 'opacity-50 pointer-events-none' : ''}`}
               onClick={() => handleTopicSelect(topic)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-center">
-                  {generatingContent && data.selectedTopic === topic ? (
+                  {isGeneratingContent && data.selectedTopic === topic ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       <span>Generating content...</span>
@@ -125,11 +146,9 @@ export default function TopicSelection({ data, onUpdate, onNext, onBack }: Topic
       </div>
 
       <div className="flex justify-start">
-        {onBack && (
-          <Button variant="outline" onClick={onBack}>
-            Back to Titles
-          </Button>
-        )}
+        <Button variant="outline" onClick={onBack}>
+          Back to Titles
+        </Button>
       </div>
     </div>
   );
