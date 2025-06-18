@@ -27,11 +27,11 @@ export default async function handler(req, res) {
 
   try {
     console.log('Request body:', req.body);
-    const { topic, numKeywords = 10 } = req.body;
+    const { title, keywords } = req.body;
 
-    if (!topic) {
-      console.error('Topic is missing from request body');
-      return res.status(400).json({ error: 'Topic is required' });
+    if (!title || !keywords || !Array.isArray(keywords)) {
+      console.error('Missing required fields:', { title, keywords });
+      return res.status(400).json({ error: 'Title and keywords array are required' });
     }
 
     if (!process.env.OPENAI_API_KEY) {
@@ -39,9 +39,10 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'OpenAI API key is not configured' });
     }
 
-    const prompt = `Generate 3-5 SEO-optimized keywords for the topic: "${topic}". 
-    Return ONLY a JSON array of strings, with no additional text or formatting. 
-    Each keyword should be relevant, specific, and include variations of the main topic.`;
+    const prompt = `Generate 1-2 main topics for a blog post with the title: "${title}". 
+    Use these keywords to guide the topic generation: ${keywords.join(', ')}.
+    Each topic should be a clear, specific aspect of the main title that would make for an engaging section.
+    Return ONLY a JSON array of strings, with no additional text or formatting.`;
 
     console.log('Sending request to OpenAI with prompt:', prompt);
 
@@ -50,7 +51,7 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "system",
-          content: "You are an SEO expert. Return only a JSON array of 3-5 keywords, with no additional text or formatting."
+          content: "You are an SEO expert. Return only a JSON array of 1-2 topics, with no additional text or formatting."
         },
         {
           role: "user",
@@ -58,13 +59,13 @@ export default async function handler(req, res) {
         }
       ],
       temperature: 0.7,
-      max_tokens: 100
+      max_tokens: 150
     });
 
     console.log('OpenAI response:', completion.choices[0].message.content);
 
     const response = completion.choices[0].message.content;
-    let keywords;
+    let topics;
     
     try {
       // Clean up the response before parsing
@@ -76,31 +77,31 @@ export default async function handler(req, res) {
         .replace(/,\n?/g, ',')       // Remove newlines after commas
         .trim();                     // Remove extra whitespace
 
-      keywords = JSON.parse(cleanedResponse);
+      topics = JSON.parse(cleanedResponse);
       
       // Ensure we have an array of strings
-      if (!Array.isArray(keywords)) {
+      if (!Array.isArray(topics)) {
         throw new Error('Response is not an array');
       }
       
-      // Clean up each keyword
-      keywords = keywords.map(kw => kw.trim());
+      // Clean up each topic
+      topics = topics.map(topic => topic.trim());
     } catch (e) {
       console.log('Failed to parse JSON response, falling back to line-by-line parsing');
       // If response is not valid JSON, split by newlines and clean up
-      keywords = response
+      topics = response
         .split('\n')
         .map(line => line.replace(/^[0-9]+\.\s*/, '').trim())
         .filter(line => line.length > 0 && !line.includes('```') && !line.includes('[') && !line.includes(']'))
         .map(line => line.replace(/^["']|["']$/g, '').trim()); // Remove quotes
     }
 
-    console.log('Final keywords:', keywords);
-    res.status(200).json({ keywords });
+    console.log('Final topics:', topics);
+    res.status(200).json({ topics });
   } catch (error) {
-    console.error('Error in keywords API:', error);
+    console.error('Error in topics API:', error);
     res.status(500).json({ 
-      error: 'Failed to generate keywords',
+      error: 'Failed to generate topics',
       details: error.message 
     });
   }

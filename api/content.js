@@ -5,29 +5,55 @@ const openai = new OpenAI({
 });
 
 export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  // Handle preflight request
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
+    console.error('Method not allowed:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { topic, keywords, title, contentType = 'blog', wordCount = 1000 } = req.body;
+    console.log('Request body:', req.body);
+    const { title, topics, keywords } = req.body;
 
-    if (!topic || !keywords || !Array.isArray(keywords) || !title) {
-      return res.status(400).json({ error: 'Topic, keywords array, and title are required' });
+    if (!title || !topics || !Array.isArray(topics) || !keywords || !Array.isArray(keywords)) {
+      console.error('Missing required fields:', { title, topics, keywords });
+      return res.status(400).json({ error: 'Title, topics array, and keywords array are required' });
     }
 
-    const prompt = `Write a ${contentType} post about "${topic}" with the title "${title}". 
-    Use these keywords naturally throughout the content: ${keywords.join(', ')}. 
-    The content should be approximately ${wordCount} words long. 
-    Include an introduction, main sections with subheadings, and a conclusion. 
-    Make the content engaging, informative, and optimized for both readers and search engines.`;
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('OpenAI API key is missing');
+      return res.status(500).json({ error: 'OpenAI API key is not configured' });
+    }
+
+    const prompt = `Write a short, engaging piece of content (100-200 words) for the title: "${title}".
+    Use these main topics as sections: ${topics.join(', ')}.
+    Incorporate these keywords naturally throughout the content: ${keywords.join(', ')}.
+    The content should be concise, well-structured, and optimized for SEO.
+    Focus on creating an engaging introduction or meta description.
+    Return the content in markdown format with proper headings and paragraphs.`;
+
+    console.log('Sending request to OpenAI with prompt:', prompt);
 
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: "You are an expert content writer and SEO specialist. Create engaging, well-structured content that ranks well in search engines."
+          content: "You are an expert content writer and SEO specialist. Write concise, engaging content (100-200 words) that incorporates keywords naturally."
         },
         {
           role: "user",
@@ -35,13 +61,26 @@ export default async function handler(req, res) {
         }
       ],
       temperature: 0.7,
-      max_tokens: 2000
+      max_tokens: 500
     });
 
+    console.log('OpenAI response received');
+
     const content = completion.choices[0].message.content;
-    res.status(200).json({ content });
+    
+    // Clean up the content
+    const cleanedContent = content
+      .replace(/```markdown\n?/g, '')  // Remove ```markdown
+      .replace(/```\n?/g, '')          // Remove ```
+      .trim();                         // Remove extra whitespace
+
+    console.log('Content generated successfully');
+    res.status(200).json({ content: cleanedContent });
   } catch (error) {
-    console.error('Error generating content:', error);
-    res.status(500).json({ error: 'Failed to generate content' });
+    console.error('Error in content API:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate content',
+      details: error.message 
+    });
   }
 } 
