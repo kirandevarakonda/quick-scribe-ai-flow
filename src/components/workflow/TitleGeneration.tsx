@@ -8,67 +8,91 @@ interface TitleGenerationProps {
   data: {
     selectedKeyword: string;
     titles: string[];
-    selectedTitle: string;
+    selectedTitle?: string;
+    keywords: string[];
   };
-  onUpdate: (data: { titles: string[]; selectedTitle: string; topics?: string[] }) => void;
+  onUpdate: (data: any) => void;
   onNext: () => void;
-  onBack?: () => void;
+  onBack: () => void;
 }
 
 export default function TitleGeneration({ data, onUpdate, onNext, onBack }: TitleGenerationProps) {
   const [generatingTopics, setGeneratingTopics] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isGeneratingTopics, setIsGeneratingTopics] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRegenerateTitles = async () => {
-    if (!data.selectedTitle) return;
-    
+    if (isRegenerating) return;
     setIsRegenerating(true);
+    setError(null);
+    
     try {
       const response = await fetch(API_ENDPOINTS.titles, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ keyword: data.selectedTitle }),
+        body: JSON.stringify({ 
+          topic: data.selectedKeyword,
+          keywords: data.keywords 
+        }),
       });
-      
-      if (!response.ok) throw new Error('Failed to generate titles');
-      
-      const { titles } = await response.json();
-      onUpdate({ titles, selectedTitle: data.selectedTitle });
-    } catch (error) {
-      console.error('Error generating titles:', error);
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to regenerate titles');
+      }
+
+      if (!responseData.titles || !Array.isArray(responseData.titles)) {
+        throw new Error('Invalid response format from server');
+      }
+
+      onUpdate({ ...data, titles: responseData.titles, selectedTitle: undefined });
+    } catch (err) {
+      console.error('Error regenerating titles:', err);
+      setError(err.message || 'Failed to regenerate titles. Please try again.');
     } finally {
       setIsRegenerating(false);
     }
   };
 
-  const handleTitleSelect = async (title: string) => {
-    setGeneratingTopics(true);
+  const handleTitleSelect = async (selectedTitle: string) => {
+    if (isGeneratingTopics) return;
+    
+    setIsGeneratingTopics(true);
+    setError(null);
+    onUpdate({ ...data, selectedTitle });
+    
     try {
-      // First update the selected title
-      onUpdate({ ...data, selectedTitle: title });
-      
-      // Then generate topics for the selected title
       const response = await fetch(API_ENDPOINTS.topics, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ title }),
+        body: JSON.stringify({ 
+          title: selectedTitle,
+          keywords: data.keywords 
+        }),
       });
-      
-      if (!response.ok) throw new Error('Failed to generate topics');
-      
-      const { topics } = await response.json();
-      onUpdate({ ...data, selectedTitle: title, topics });
-      
-      // Automatically proceed to the next step
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to generate topics');
+      }
+
+      if (!responseData.topics || !Array.isArray(responseData.topics)) {
+        throw new Error('Invalid response format from server');
+      }
+
+      onUpdate({ ...data, selectedTitle, topics: responseData.topics });
       onNext();
-    } catch (error) {
-      console.error('Error generating topics:', error);
-    } finally {
-      setGeneratingTopics(false);
+    } catch (err) {
+      console.error('Error generating topics:', err);
+      setError(err.message || 'Failed to generate topics. Please try again.');
+      setIsGeneratingTopics(false);
     }
   };
 
