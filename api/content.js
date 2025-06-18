@@ -45,12 +45,13 @@ export default async function handler(req, res) {
     The content should be concise, well-structured, and optimized for SEO.
     Focus on creating an engaging introduction or meta description.
     
-    Format the content using markdown with the following structure:
-    1. Main title with a single # (no space after #)
-    2. Introduction paragraph
-    3. Section heading with ## (no space after ##)
-    4. Content paragraphs
-    5. Use ** for bold text (no spaces between ** and text)
+    IMPORTANT FORMATTING RULES:
+    1. Use markdown formatting
+    2. For the main title, use a single # with NO space after it (e.g., "#Title")
+    3. For section headings, use ## with NO space after it (e.g., "##Section")
+    4. For bold text, use ** with NO spaces (e.g., "**bold text**")
+    5. Add a blank line between sections
+    6. Do not use any other markdown formatting
     
     Example format:
     #Main Title
@@ -68,7 +69,7 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "system",
-          content: "You are an expert content writer and SEO specialist. Write concise, engaging content (100-200 words) that incorporates keywords naturally. Use proper markdown formatting without spaces after # or **."
+          content: "You are an expert content writer and SEO specialist. Write concise, engaging content (100-200 words) that incorporates keywords naturally. Follow the markdown formatting rules exactly - no spaces after # or **."
         },
         {
           role: "user",
@@ -87,7 +88,8 @@ export default async function handler(req, res) {
     const cleanedContent = content
       .replace(/```markdown\n?/g, '')  // Remove ```markdown
       .replace(/```\n?/g, '')          // Remove ```
-      .replace(/#\s+/g, '#')           // Remove spaces after #
+      .replace(/^#\s+/gm, '#')         // Remove spaces after # at start of lines
+      .replace(/^##\s+/gm, '##')       // Remove spaces after ## at start of lines
       .replace(/\*\*\s+/g, '**')       // Remove spaces after **
       .replace(/\s+\*\*/g, '**')       // Remove spaces before **
       .replace(/\n{3,}/g, '\n\n')      // Replace multiple newlines with double newlines

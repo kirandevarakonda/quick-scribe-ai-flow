@@ -87,12 +87,19 @@ export default function ContentGeneration({ data, onUpdate, onNext, onBack }: Co
 
   // Preprocess the content to ensure proper markdown formatting
   const preprocessContent = (content: string) => {
-    return content
+    // First, ensure proper line breaks
+    let processed = content.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+    
+    // Process headings
+    processed = processed
       .replace(/^#\s+/gm, '#')           // Remove spaces after # at start of lines
       .replace(/^##\s+/gm, '##')         // Remove spaces after ## at start of lines
       .replace(/\*\*\s+/g, '**')         // Remove spaces after **
       .replace(/\s+\*\*/g, '**')         // Remove spaces before **
-      .replace(/\n{3,}/g, '\n\n');       // Replace multiple newlines with double newlines
+      .replace(/^#(.*?)$/gm, '# $1')     // Add space after # for proper markdown
+      .replace(/^##(.*?)$/gm, '## $1');  // Add space after ## for proper markdown
+    
+    return processed;
   };
 
   return (
