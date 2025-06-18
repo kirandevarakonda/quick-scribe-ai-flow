@@ -85,6 +85,16 @@ export default function ContentGeneration({ data, onUpdate, onNext, onBack }: Co
     ),
   };
 
+  // Preprocess the content to ensure proper markdown formatting
+  const preprocessContent = (content: string) => {
+    return content
+      .replace(/^#\s+/gm, '#')           // Remove spaces after # at start of lines
+      .replace(/^##\s+/gm, '##')         // Remove spaces after ## at start of lines
+      .replace(/\*\*\s+/g, '**')         // Remove spaces after **
+      .replace(/\s+\*\*/g, '**')         // Remove spaces before **
+      .replace(/\n{3,}/g, '\n\n');       // Replace multiple newlines with double newlines
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -107,7 +117,7 @@ export default function ContentGeneration({ data, onUpdate, onNext, onBack }: Co
       <div className="p-6 bg-white border rounded-lg shadow-sm">
         <div className="prose max-w-none">
           <ReactMarkdown components={components}>
-            {data.content}
+            {preprocessContent(data.content)}
           </ReactMarkdown>
         </div>
       </div>

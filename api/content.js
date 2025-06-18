@@ -44,12 +44,22 @@ export default async function handler(req, res) {
     Incorporate these keywords naturally throughout the content: ${keywords.join(', ')}.
     The content should be concise, well-structured, and optimized for SEO.
     Focus on creating an engaging introduction or meta description.
-    Format the content using markdown:
-    - Use # for the main title
-    - Use ## for section headings
-    - Use ** for bold text
-    - Use proper paragraph spacing
-    Return the content in markdown format.`;
+    
+    Format the content using markdown with the following structure:
+    1. Main title with a single # (no space after #)
+    2. Introduction paragraph
+    3. Section heading with ## (no space after ##)
+    4. Content paragraphs
+    5. Use ** for bold text (no spaces between ** and text)
+    
+    Example format:
+    #Main Title
+    
+    Introduction paragraph with **bold text** for emphasis.
+    
+    ##Section Heading
+    
+    Content paragraph with more **bold text** for key points.`;
 
     console.log('Sending request to OpenAI with prompt:', prompt);
 
@@ -58,7 +68,7 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "system",
-          content: "You are an expert content writer and SEO specialist. Write concise, engaging content (100-200 words) that incorporates keywords naturally. Use proper markdown formatting for headings and emphasis."
+          content: "You are an expert content writer and SEO specialist. Write concise, engaging content (100-200 words) that incorporates keywords naturally. Use proper markdown formatting without spaces after # or **."
         },
         {
           role: "user",
@@ -77,6 +87,9 @@ export default async function handler(req, res) {
     const cleanedContent = content
       .replace(/```markdown\n?/g, '')  // Remove ```markdown
       .replace(/```\n?/g, '')          // Remove ```
+      .replace(/#\s+/g, '#')           // Remove spaces after #
+      .replace(/\*\*\s+/g, '**')       // Remove spaces after **
+      .replace(/\s+\*\*/g, '**')       // Remove spaces before **
       .replace(/\n{3,}/g, '\n\n')      // Replace multiple newlines with double newlines
       .trim();                         // Remove extra whitespace
 
