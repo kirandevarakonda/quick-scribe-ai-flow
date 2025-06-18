@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     }
 
     const prompt = `Generate ${numKeywords} SEO-optimized keywords for the topic: "${topic}". 
-    Format the response as a JSON array of strings. 
+    Return ONLY a JSON array of strings, with no additional text or formatting. 
     Each keyword should be relevant, specific, and include variations of the main topic.`;
 
     console.log('Sending request to OpenAI with prompt:', prompt);
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "system",
-          content: "You are an SEO expert. Generate relevant, specific keywords that would help with content optimization."
+          content: "You are an SEO expert. Return only a JSON array of keywords, with no additional text or formatting."
         },
         {
           role: "user",
@@ -67,14 +67,32 @@ export default async function handler(req, res) {
     let keywords;
     
     try {
-      keywords = JSON.parse(response);
+      // Clean up the response before parsing
+      const cleanedResponse = response
+        .replace(/```json\n?/g, '')  // Remove ```json
+        .replace(/```\n?/g, '')      // Remove ```
+        .replace(/\[\n?/g, '[')      // Remove newlines after [
+        .replace(/\]\n?/g, ']')      // Remove newlines before ]
+        .replace(/,\n?/g, ',')       // Remove newlines after commas
+        .trim();                     // Remove extra whitespace
+
+      keywords = JSON.parse(cleanedResponse);
+      
+      // Ensure we have an array of strings
+      if (!Array.isArray(keywords)) {
+        throw new Error('Response is not an array');
+      }
+      
+      // Clean up each keyword
+      keywords = keywords.map(kw => kw.trim());
     } catch (e) {
       console.log('Failed to parse JSON response, falling back to line-by-line parsing');
       // If response is not valid JSON, split by newlines and clean up
       keywords = response
         .split('\n')
         .map(line => line.replace(/^[0-9]+\.\s*/, '').trim())
-        .filter(line => line.length > 0);
+        .filter(line => line.length > 0 && !line.includes('```') && !line.includes('[') && !line.includes(']'))
+        .map(line => line.replace(/^["']|["']$/g, '').trim()); // Remove quotes
     }
 
     console.log('Final keywords:', keywords);
