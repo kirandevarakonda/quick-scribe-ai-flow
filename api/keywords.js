@@ -33,7 +33,7 @@ export default async function handler(req, res) {
 
     if (!process.env.OPENAI_API_KEY) {
       console.error('OpenAI API key is not set');
-      return res.status(500).json({ error: 'OpenAI API key is not configured' });
+      return res.status(500).json({ error: 'Server configuration error' });
     }
 
     const prompt = `Generate 10 SEO-optimized keywords for the topic: "${seedKeyword}". 
