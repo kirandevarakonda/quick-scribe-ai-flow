@@ -32,17 +32,18 @@ export default function KeywordResearch({ data, onUpdate, onNext }: KeywordResea
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ topic: keyword.trim() }),
+        body: JSON.stringify({ seedKeyword: keyword.trim() }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate keywords');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate keywords');
       }
 
       const result = await response.json();
       onUpdate({ keywords: result.keywords, selectedKeyword: '' });
     } catch (err) {
-      setError('Failed to generate keywords. Please try again.');
+      setError(err.message || 'Failed to generate keywords. Please try again.');
       console.error('Error generating keywords:', err);
     } finally {
       setIsLoading(false);
@@ -61,17 +62,18 @@ export default function KeywordResearch({ data, onUpdate, onNext }: KeywordResea
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ topic: keyword.trim() }),
+        body: JSON.stringify({ seedKeyword: keyword.trim() }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate keywords');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate keywords');
       }
 
       const result = await response.json();
       onUpdate({ keywords: result.keywords, selectedKeyword: data.selectedKeyword });
     } catch (err) {
-      setError('Failed to generate keywords. Please try again.');
+      setError(err.message || 'Failed to generate keywords. Please try again.');
       console.error('Error generating keywords:', err);
     } finally {
       setIsLoading(false);

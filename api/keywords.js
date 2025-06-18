@@ -5,18 +5,33 @@ const openai = new OpenAI({
 });
 
 export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  // Handle preflight request
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { topic, numKeywords = 10 } = req.body;
+    const { seedKeyword } = req.body;
 
-    if (!topic) {
-      return res.status(400).json({ error: 'Topic is required' });
+    if (!seedKeyword) {
+      return res.status(400).json({ error: 'Seed keyword is required' });
     }
 
-    const prompt = `Generate ${numKeywords} SEO-optimized keywords for the topic: "${topic}". 
+    const prompt = `Generate 10 SEO-optimized keywords for the topic: "${seedKeyword}". 
     Format the response as a JSON array of strings. 
     Each keyword should be relevant, specific, and include variations of the main topic.`;
 
