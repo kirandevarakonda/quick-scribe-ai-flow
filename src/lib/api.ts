@@ -1,5 +1,5 @@
 const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://seo-content-generator-ai.vercel.app/api'
+  ? '/api'  // Use relative path in production
   : 'http://localhost:3001/api';
 
 export const API_ENDPOINTS = {
