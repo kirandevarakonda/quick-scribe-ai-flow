@@ -47,18 +47,18 @@ export default async function handler(req, res) {
     
     IMPORTANT FORMATTING RULES:
     1. Use markdown formatting
-    2. For the main title, use a single # with NO space after it (e.g., "#Title")
-    3. For section headings, use ## with NO space after it (e.g., "##Section")
-    4. For bold text, use ** with NO spaces (e.g., "**bold text**")
+    2. For the main title, use a single # with a space after it (e.g., "# Title")
+    3. For section headings, use ## with a space after it (e.g., "## Section")
+    4. For bold text, use ** with spaces around the text (e.g., "**bold text**")
     5. Add a blank line between sections
     6. Do not use any other markdown formatting
     
     Example format:
-    #Main Title
+    # Main Title
     
     Introduction paragraph with **bold text** for emphasis.
     
-    ##Section Heading
+    ## Section Heading
     
     Content paragraph with more **bold text** for key points.`;
 
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "system",
-          content: "You are an expert content writer and SEO specialist. Write concise, engaging content (100-200 words) that incorporates keywords naturally. Follow the markdown formatting rules exactly - no spaces after # or **."
+          content: "You are an expert content writer and SEO specialist. Write concise, engaging content (100-200 words) that incorporates keywords naturally. Follow the markdown formatting rules exactly - use spaces after # and around **."
         },
         {
           role: "user",
@@ -88,10 +88,10 @@ export default async function handler(req, res) {
     const cleanedContent = content
       .replace(/```markdown\n?/g, '')  // Remove ```markdown
       .replace(/```\n?/g, '')          // Remove ```
-      .replace(/^#\s+/gm, '#')         // Remove spaces after # at start of lines
-      .replace(/^##\s+/gm, '##')       // Remove spaces after ## at start of lines
-      .replace(/\*\*\s+/g, '**')       // Remove spaces after **
-      .replace(/\s+\*\*/g, '**')       // Remove spaces before **
+      .replace(/^#\s*/gm, '# ')        // Ensure space after #
+      .replace(/^##\s*/gm, '## ')      // Ensure space after ##
+      .replace(/\*\*\s*/g, '** ')      // Ensure space after **
+      .replace(/\s*\*\*/g, ' **')      // Ensure space before **
       .replace(/\n{3,}/g, '\n\n')      // Replace multiple newlines with double newlines
       .trim();                         // Remove extra whitespace
 

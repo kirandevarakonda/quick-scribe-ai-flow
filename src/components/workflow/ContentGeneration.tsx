@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { API_ENDPOINTS } from '../../lib/api';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ContentGenerationProps {
   data: {
@@ -88,16 +89,14 @@ export default function ContentGeneration({ data, onUpdate, onNext, onBack }: Co
   // Preprocess the content to ensure proper markdown formatting
   const preprocessContent = (content: string) => {
     // First, ensure proper line breaks
-    let processed = content.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n');
-    
-    // Process headings
-    processed = processed
-      .replace(/^#\s+/gm, '#')           // Remove spaces after # at start of lines
-      .replace(/^##\s+/gm, '##')         // Remove spaces after ## at start of lines
-      .replace(/\*\*\s+/g, '**')         // Remove spaces after **
-      .replace(/\s+\*\*/g, '**')         // Remove spaces before **
+    let processed = content
+      .replace(/\r\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
       .replace(/^#(.*?)$/gm, '# $1')     // Add space after # for proper markdown
-      .replace(/^##(.*?)$/gm, '## $1');  // Add space after ## for proper markdown
+      .replace(/^##(.*?)$/gm, '## $1')   // Add space after ## for proper markdown
+      .replace(/\*\*(.*?)\*\*/g, ' **$1** ')  // Add spaces around bold text
+      .replace(/\s+/g, ' ')              // Normalize spaces
+      .trim();                           // Remove extra whitespace
     
     return processed;
   };
@@ -123,7 +122,10 @@ export default function ContentGeneration({ data, onUpdate, onNext, onBack }: Co
 
       <div className="p-6 bg-white border rounded-lg shadow-sm">
         <div className="prose max-w-none">
-          <ReactMarkdown components={components}>
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]}
+            components={components}
+          >
             {preprocessContent(data.content)}
           </ReactMarkdown>
         </div>
