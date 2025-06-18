@@ -119,19 +119,27 @@ export default function KeywordResearch({ data, onUpdate, onNext }: KeywordResea
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ keyword: selectedKeyword }),
+        body: JSON.stringify({ 
+          topic: selectedKeyword,
+          keywords: data.keywords 
+        }),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to generate titles');
+        throw new Error(responseData.error || 'Failed to generate titles');
       }
 
-      const result = await response.json();
-      onUpdate({ keywords: data.keywords, selectedKeyword, titles: result.titles });
+      if (!responseData.titles || !Array.isArray(responseData.titles)) {
+        throw new Error('Invalid response format from server');
+      }
+
+      onUpdate({ keywords: data.keywords, selectedKeyword, titles: responseData.titles });
       onNext();
     } catch (err) {
       console.error('Error generating titles:', err);
-      setError('Failed to generate titles. Please try again.');
+      setError(err.message || 'Failed to generate titles. Please try again.');
       setIsGeneratingTitles(false);
     }
   };
