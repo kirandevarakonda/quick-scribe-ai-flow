@@ -31,6 +31,11 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Seed keyword is required' });
     }
 
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('OpenAI API key is not set');
+      return res.status(500).json({ error: 'OpenAI API key is not configured' });
+    }
+
     const prompt = `Generate 10 SEO-optimized keywords for the topic: "${seedKeyword}". 
     Format the response as a JSON array of strings. 
     Each keyword should be relevant, specific, and include variations of the main topic.`;
@@ -64,9 +69,9 @@ export default async function handler(req, res) {
         .filter(line => line.length > 0);
     }
 
-    res.status(200).json({ keywords });
+    return res.status(200).json({ keywords });
   } catch (error) {
     console.error('Error generating keywords:', error);
-    res.status(500).json({ error: 'Failed to generate keywords' });
+    return res.status(500).json({ error: 'Failed to generate keywords' });
   }
 } 
