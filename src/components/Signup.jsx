@@ -22,7 +22,7 @@ export default function Signup() {
       setError('');
       setLoading(true);
       await signup(email, password);
-      navigate('/dashboard');
+      navigate('/workflow');
     } catch (error) {
       setError('Failed to create an account: ' + error.message);
     }
