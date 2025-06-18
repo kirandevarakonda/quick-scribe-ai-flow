@@ -21,24 +21,29 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') {
+    console.error('Method not allowed:', req.method);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { seedKeyword } = req.body;
+    console.log('Request body:', req.body);
+    const { topic, numKeywords = 10 } = req.body;
 
-    if (!seedKeyword) {
-      return res.status(400).json({ error: 'Seed keyword is required' });
+    if (!topic) {
+      console.error('Topic is missing from request body');
+      return res.status(400).json({ error: 'Topic is required' });
     }
 
     if (!process.env.OPENAI_API_KEY) {
-      console.error('OpenAI API key is not set');
-      return res.status(500).json({ error: 'Server configuration error' });
+      console.error('OpenAI API key is missing');
+      return res.status(500).json({ error: 'OpenAI API key is not configured' });
     }
 
-    const prompt = `Generate 10 SEO-optimized keywords for the topic: "${seedKeyword}". 
+    const prompt = `Generate ${numKeywords} SEO-optimized keywords for the topic: "${topic}". 
     Format the response as a JSON array of strings. 
     Each keyword should be relevant, specific, and include variations of the main topic.`;
+
+    console.log('Sending request to OpenAI with prompt:', prompt);
 
     const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
@@ -56,12 +61,15 @@ export default async function handler(req, res) {
       max_tokens: 150
     });
 
+    console.log('OpenAI response:', completion.choices[0].message.content);
+
     const response = completion.choices[0].message.content;
     let keywords;
     
     try {
       keywords = JSON.parse(response);
     } catch (e) {
+      console.log('Failed to parse JSON response, falling back to line-by-line parsing');
       // If response is not valid JSON, split by newlines and clean up
       keywords = response
         .split('\n')
@@ -69,9 +77,13 @@ export default async function handler(req, res) {
         .filter(line => line.length > 0);
     }
 
-    return res.status(200).json({ keywords });
+    console.log('Final keywords:', keywords);
+    res.status(200).json({ keywords });
   } catch (error) {
-    console.error('Error generating keywords:', error);
-    return res.status(500).json({ error: 'Failed to generate keywords' });
+    console.error('Error in keywords API:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate keywords',
+      details: error.message 
+    });
   }
 } 

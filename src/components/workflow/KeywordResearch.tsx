@@ -27,24 +27,34 @@ export default function KeywordResearch({ data, onUpdate, onNext }: KeywordResea
     setError('');
     
     try {
-      const response = await fetch(API_ENDPOINTS.keywords, {
+      const apiUrl = API_ENDPOINTS.keywords;
+      console.log('Sending request to:', apiUrl);
+      console.log('Request body:', { topic: keyword.trim() });
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        body: JSON.stringify({ seedKeyword: keyword.trim() }),
+        body: JSON.stringify({ topic: keyword.trim() }),
       });
 
+      const data = await response.json();
+      console.log('Response:', data);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate keywords');
+        throw new Error(data.error || data.details || 'Failed to generate keywords');
       }
 
-      const result = await response.json();
-      onUpdate({ keywords: result.keywords, selectedKeyword: '' });
+      if (!data.keywords || !Array.isArray(data.keywords)) {
+        throw new Error('Invalid response format from server');
+      }
+
+      onUpdate({ keywords: data.keywords, selectedKeyword: '' });
     } catch (err) {
-      setError(err.message || 'Failed to generate keywords. Please try again.');
       console.error('Error generating keywords:', err);
+      setError(err.message || 'Failed to generate keywords. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -57,24 +67,34 @@ export default function KeywordResearch({ data, onUpdate, onNext }: KeywordResea
     setError('');
     
     try {
-      const response = await fetch(API_ENDPOINTS.keywords, {
+      const apiUrl = API_ENDPOINTS.keywords;
+      console.log('Sending request to:', apiUrl);
+      console.log('Request body:', { topic: keyword.trim() });
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        body: JSON.stringify({ seedKeyword: keyword.trim() }),
+        body: JSON.stringify({ topic: keyword.trim() }),
       });
 
+      const data = await response.json();
+      console.log('Response:', data);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate keywords');
+        throw new Error(data.error || data.details || 'Failed to generate keywords');
       }
 
-      const result = await response.json();
-      onUpdate({ keywords: result.keywords, selectedKeyword: data.selectedKeyword });
+      if (!data.keywords || !Array.isArray(data.keywords)) {
+        throw new Error('Invalid response format from server');
+      }
+
+      onUpdate({ keywords: data.keywords, selectedKeyword: data.selectedKeyword });
     } catch (err) {
-      setError(err.message || 'Failed to generate keywords. Please try again.');
       console.error('Error generating keywords:', err);
+      setError(err.message || 'Failed to generate keywords. Please try again.');
     } finally {
       setIsLoading(false);
     }
