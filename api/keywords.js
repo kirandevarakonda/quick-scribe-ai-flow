@@ -1,72 +1,57 @@
-const { spawn } = require('child_process');
-const path = require('path');
+import OpenAI from 'openai';
 
-module.exports = async (req, res) => {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-  // Handle OPTIONS request
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  // Only allow POST requests
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { seedKeyword } = req.body;
-    if (!seedKeyword) {
-      return res.status(400).json({ error: 'Seed keyword is required' });
+    const { topic, numKeywords = 10 } = req.body;
+
+    if (!topic) {
+      return res.status(400).json({ error: 'Topic is required' });
     }
 
-    console.log('Generating keywords for:', seedKeyword);
-    
-    // Use python3 command and ensure we're in the correct directory
-    const pythonProcess = spawn('python3', [
-      path.join(__dirname, '..', 'backend', 'llm_service.py'),
-      'generate_keywords',
-      seedKeyword
-    ], {
-      cwd: path.join(__dirname, '..', 'backend')
-    });
+    const prompt = `Generate ${numKeywords} SEO-optimized keywords for the topic: "${topic}". 
+    Format the response as a JSON array of strings. 
+    Each keyword should be relevant, specific, and include variations of the main topic.`;
 
-    let result = '';
-    let error = '';
-
-    pythonProcess.stdout.on('data', (data) => {
-      result += data.toString();
-    });
-
-    pythonProcess.stderr.on('data', (data) => {
-      error += data.toString();
-      console.error('Python Error:', data.toString());
-    });
-
-    await new Promise((resolve, reject) => {
-      pythonProcess.on('close', (code) => {
-        if (code !== 0) {
-          console.error('Python process exited with code:', code);
-          console.error('Error output:', error);
-          reject(new Error(error || `Python process exited with code ${code}`));
-        } else {
-          resolve();
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are an SEO expert. Generate relevant, specific keywords that would help with content optimization."
+        },
+        {
+          role: "user",
+          content: prompt
         }
-      });
+      ],
+      temperature: 0.7,
+      max_tokens: 150
     });
 
-    console.log('Keywords generated:', result);
-    res.json(JSON.parse(result));
+    const response = completion.choices[0].message.content;
+    let keywords;
+    
+    try {
+      keywords = JSON.parse(response);
+    } catch (e) {
+      // If response is not valid JSON, split by newlines and clean up
+      keywords = response
+        .split('\n')
+        .map(line => line.replace(/^[0-9]+\.\s*/, '').trim())
+        .filter(line => line.length > 0);
+    }
+
+    res.status(200).json({ keywords });
   } catch (error) {
     console.error('Error generating keywords:', error);
-    res.status(500).json({ error: error.message || 'Failed to generate keywords' });
+    res.status(500).json({ error: 'Failed to generate keywords' });
   }
-}; 
+} 

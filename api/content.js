@@ -1,71 +1,47 @@
-const { spawn } = require('child_process');
-const path = require('path');
+import OpenAI from 'openai';
 
-module.exports = async (req, res) => {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-  // Handle OPTIONS request
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  // Only allow POST requests
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { topic } = req.body;
-    if (!topic) {
-      return res.status(400).json({ error: 'Topic is required' });
+    const { topic, keywords, title, contentType = 'blog', wordCount = 1000 } = req.body;
+
+    if (!topic || !keywords || !Array.isArray(keywords) || !title) {
+      return res.status(400).json({ error: 'Topic, keywords array, and title are required' });
     }
 
-    console.log('Generating content for:', topic);
-    
-    const pythonProcess = spawn('python3', [
-      path.join(__dirname, '..', 'backend', 'llm_service.py'),
-      'generate_content',
-      topic
-    ], {
-      cwd: path.join(__dirname, '..', 'backend')
-    });
+    const prompt = `Write a ${contentType} post about "${topic}" with the title "${title}". 
+    Use these keywords naturally throughout the content: ${keywords.join(', ')}. 
+    The content should be approximately ${wordCount} words long. 
+    Include an introduction, main sections with subheadings, and a conclusion. 
+    Make the content engaging, informative, and optimized for both readers and search engines.`;
 
-    let result = '';
-    let error = '';
-
-    pythonProcess.stdout.on('data', (data) => {
-      result += data.toString();
-    });
-
-    pythonProcess.stderr.on('data', (data) => {
-      error += data.toString();
-      console.error('Python Error:', data.toString());
-    });
-
-    await new Promise((resolve, reject) => {
-      pythonProcess.on('close', (code) => {
-        if (code !== 0) {
-          console.error('Python process exited with code:', code);
-          console.error('Error output:', error);
-          reject(new Error(error || `Python process exited with code ${code}`));
-        } else {
-          resolve();
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert content writer and SEO specialist. Create engaging, well-structured content that ranks well in search engines."
+        },
+        {
+          role: "user",
+          content: prompt
         }
-      });
+      ],
+      temperature: 0.7,
+      max_tokens: 2000
     });
 
-    console.log('Content generated:', result);
-    res.json(JSON.parse(result));
+    const content = completion.choices[0].message.content;
+    res.status(200).json({ content });
   } catch (error) {
     console.error('Error generating content:', error);
-    res.status(500).json({ error: error.message || 'Failed to generate content' });
+    res.status(500).json({ error: 'Failed to generate content' });
   }
-}; 
+} 

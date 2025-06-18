@@ -9,37 +9,14 @@
       }
     },
     {
-      "src": "api/**/*.js",
+      "src": "backend/server.js",
       "use": "@vercel/node"
     }
   ],
-  "routes": [
-    {
-      "src": "/api/keywords",
-      "dest": "/api/keywords.js"
-    },
-    {
-      "src": "/api/titles",
-      "dest": "/api/titles.js"
-    },
-    {
-      "src": "/api/topics",
-      "dest": "/api/topics.js"
-    },
-    {
-      "src": "/api/content",
-      "dest": "/api/content.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/dist/$1"
-    }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "backend/server.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
-  "build": {
-    "env": {
-      "PYTHON_VERSION": "3.9"
-    }
-  },
   "headers": [
     {
       "source": "/assets/(.*)",
