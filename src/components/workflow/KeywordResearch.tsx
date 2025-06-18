@@ -32,7 +32,7 @@ export default function KeywordResearch({ data, onUpdate, onNext }: KeywordResea
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ seedKeyword: keyword.trim() }),
+        body: JSON.stringify({ topic: keyword.trim() }),
       });
 
       if (!response.ok) {
@@ -61,7 +61,7 @@ export default function KeywordResearch({ data, onUpdate, onNext }: KeywordResea
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ seedKeyword: keyword.trim() }),
+        body: JSON.stringify({ topic: keyword.trim() }),
       });
 
       if (!response.ok) {
