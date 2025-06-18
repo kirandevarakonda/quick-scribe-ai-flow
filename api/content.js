@@ -44,7 +44,12 @@ export default async function handler(req, res) {
     Incorporate these keywords naturally throughout the content: ${keywords.join(', ')}.
     The content should be concise, well-structured, and optimized for SEO.
     Focus on creating an engaging introduction or meta description.
-    Return the content in markdown format with proper headings and paragraphs.`;
+    Format the content using markdown:
+    - Use # for the main title
+    - Use ## for section headings
+    - Use ** for bold text
+    - Use proper paragraph spacing
+    Return the content in markdown format.`;
 
     console.log('Sending request to OpenAI with prompt:', prompt);
 
@@ -53,7 +58,7 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "system",
-          content: "You are an expert content writer and SEO specialist. Write concise, engaging content (100-200 words) that incorporates keywords naturally."
+          content: "You are an expert content writer and SEO specialist. Write concise, engaging content (100-200 words) that incorporates keywords naturally. Use proper markdown formatting for headings and emphasis."
         },
         {
           role: "user",
@@ -68,10 +73,11 @@ export default async function handler(req, res) {
 
     const content = completion.choices[0].message.content;
     
-    // Clean up the content
+    // Clean up the content while preserving markdown
     const cleanedContent = content
       .replace(/```markdown\n?/g, '')  // Remove ```markdown
       .replace(/```\n?/g, '')          // Remove ```
+      .replace(/\n{3,}/g, '\n\n')      // Replace multiple newlines with double newlines
       .trim();                         // Remove extra whitespace
 
     console.log('Content generated successfully');
