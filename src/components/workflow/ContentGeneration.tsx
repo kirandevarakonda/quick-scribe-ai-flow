@@ -63,6 +63,28 @@ export default function ContentGeneration({ data, onUpdate, onNext, onBack }: Co
     console.log('Saving content:', data.content);
   };
 
+  // Custom components for markdown rendering
+  const components = {
+    h1: ({ children }: { children: React.ReactNode }) => (
+      <h1 className="text-3xl font-bold text-gray-900 mb-6 mt-2">{children}</h1>
+    ),
+    h2: ({ children }: { children: React.ReactNode }) => (
+      <h2 className="text-2xl font-bold text-gray-800 mb-4 mt-6">{children}</h2>
+    ),
+    h3: ({ children }: { children: React.ReactNode }) => (
+      <h3 className="text-xl font-bold text-gray-800 mb-3 mt-4">{children}</h3>
+    ),
+    p: ({ children }: { children: React.ReactNode }) => (
+      <p className="text-gray-700 leading-relaxed mb-4">{children}</p>
+    ),
+    strong: ({ children }: { children: React.ReactNode }) => (
+      <strong className="font-bold text-gray-900">{children}</strong>
+    ),
+    em: ({ children }: { children: React.ReactNode }) => (
+      <em className="italic text-gray-800">{children}</em>
+    ),
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -84,16 +106,7 @@ export default function ContentGeneration({ data, onUpdate, onNext, onBack }: Co
 
       <div className="p-6 bg-white border rounded-lg shadow-sm">
         <div className="prose max-w-none">
-          <ReactMarkdown
-            components={{
-              h1: ({ node, ...props }) => <h1 className="text-2xl font-bold text-gray-900 mb-4" {...props} />,
-              h2: ({ node, ...props }) => <h2 className="text-xl font-bold text-gray-900 mb-3" {...props} />,
-              h3: ({ node, ...props }) => <h3 className="text-lg font-bold text-gray-900 mb-2" {...props} />,
-              p: ({ node, ...props }) => <p className="text-gray-700 leading-relaxed mb-4" {...props} />,
-              strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
-              em: ({ node, ...props }) => <em className="italic" {...props} />,
-            }}
-          >
+          <ReactMarkdown components={components}>
             {data.content}
           </ReactMarkdown>
         </div>
